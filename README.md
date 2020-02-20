@@ -6,7 +6,9 @@ It is a simple bash script that fully automates the installation of a Arch Linux
 
 If some time later after an system update for any reason the system does not boot correctly a recovery script is also provided to enter in a recovery mode that allows to downgrade packages or execute any other commands to restore the system. Also a log of the installation can be taken with <a href="https://asciinema.org/">asciinema</a>.
 
-**Warning! This script can delete all partitions of the persistent storage. It is recommended to test it first in a virtual machine like <a href="https://www.virtualbox.org/">VirtualBox</a>.**
+For new features, improvements and bugs fill an issue in GitHub or make a pull request. You can test it in a VirtualBox virtual machine (recommended) before run it in real hardware. If you test it in real hardware please send me an email to pico.dev@gmail.com with the machine description and tell me if something goes wrong or all works fine. [Pull request](https://github.com/gmemstr/alis/pulls) and [new feature request](https://github.com/gmemstr/alis/issues) are welcome!
+
+**Warning! This script deletes all partitions of the persistent storage**
 
 Currently these scripts are for me but maybe they are useful for you too.
 
@@ -92,7 +94,7 @@ Internet connection is required, with wireless WIFI connection see <a href="http
 ```
 # # Start the system with lastest Arch Linux installation media
 # loadkeys [keymap]
-# curl https://raw.githubusercontent.com/picodotdev/alis/master/download.sh | bash, or with URL shortener curl -sL https://bit.ly/2F3CATp | bash
+# curl https://raw.githubusercontent.com/gmemstr/alis/master/download.sh | bash, or with URL shortener curl -sL https://bit.ly/2F3CATp | bash
 # # Edit alis.conf and change variables values with your preferences
 # vim alis.conf
 # # Start
@@ -112,7 +114,7 @@ As another form of log.
 ```
 # # Start the system with lastest Arch Linux installation media
 # loadkeys [keymap]
-# curl https://raw.githubusercontent.com/picodotdev/alis/master/download.sh | bash, or with URL shortener curl -sL https://bit.ly/2F3CATp | bash
+# curl https://raw.githubusercontent.com/gmemstr/alis/master/download.sh | bash, or with URL shortener curl -sL https://bit.ly/2F3CATp | bash
 # ./alis-asciinema.sh
 # # Edit alis.conf and change variables values with your preferences
 # vim alis.conf
@@ -130,7 +132,7 @@ Boot from the latest <a href="https://www.archlinux.org/download/">original Arch
 ```
 # # Start the system with lastest Arch Linux installation media
 # loadkeys [keymap]
-# curl https://raw.githubusercontent.com/picodotdev/alis/master/download.sh | bash, or with URL shortener curl -sL https://bit.ly/2F3CATp | bash
+# curl https://raw.githubusercontent.com/gmemstr/alis/master/download.sh | bash, or with URL shortener curl -sL https://bit.ly/2F3CATp | bash
 # # Edit alis-recovery.conf and change variables values with your last installation with alis
 # vim alis-recovery.conf
 # # Optional asciinema video

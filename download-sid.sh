@@ -29,6 +29,7 @@ rm -f alis-recovery.sh
 rm -f alis-recovery-asciinema.sh
 rm -f alis-recovery-reboot.sh
 
+<<<<<<< HEAD
 curl -O https://raw.githubusercontent.com/$GITHUB_USER/alis/sid/alis.conf
 curl -O https://raw.githubusercontent.com/$GITHUB_USER/alis/sid/alis.sh
 curl -O https://raw.githubusercontent.com/$GITHUB_USER/alis/sid/alis-asciinema.sh
@@ -38,6 +39,17 @@ curl -O https://raw.githubusercontent.com/$GITHUB_USER/alis/sid/alis-recovery.co
 curl -O https://raw.githubusercontent.com/$GITHUB_USER/alis/sid/alis-recovery.sh
 curl -O https://raw.githubusercontent.com/$GITHUB_USER/alis/sid/alis-recovery-asciinema.sh
 curl -O https://raw.githubusercontent.com/$GITHUB_USER/alis/sid/alis-recovery-reboot.sh
+=======
+wget https://raw.githubusercontent.com/gmemstr/alis/sid/alis.conf
+wget https://raw.githubusercontent.com/gmemstr/alis/sid/alis.sh
+wget https://raw.githubusercontent.com/gmemstr/alis/sid/alis-asciinema.sh
+wget https://raw.githubusercontent.com/gmemstr/alis/sid/alis-reboot.sh
+
+wget https://raw.githubusercontent.com/gmemstr/alis/sid/alis-recovery.conf
+wget https://raw.githubusercontent.com/gmemstr/alis/sid/alis-recovery.sh
+wget https://raw.githubusercontent.com/gmemstr/alis/sid/alis-recovery-asciinema.sh
+wget https://raw.githubusercontent.com/gmemstr/alis/sid/alis-recovery-reboot.sh
+>>>>>>> b908c2c (Modify scripts to point to fork)
 
 chmod +x alis.sh
 chmod +x alis-asciinema.sh

@@ -18,7 +18,7 @@ set -e
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-# This script is hosted at https://github.com/picodotdev/alis. For new features,
+# This script is hosted at https://github.com/gmemstr/alis. For new features,
 # improvements and bugs fill an issue in GitHub or make a pull request.
 # Pull Request are welcome!
 #
