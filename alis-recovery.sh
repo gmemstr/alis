@@ -46,11 +46,13 @@ set -e
 # global variables (no configuration, don't edit)
 ASCIINEMA=""
 BIOS_TYPE=""
-PARTITION_BIOS=""
 PARTITION_BOOT=""
 PARTITION_ROOT=""
+PARTITION_BOOT_NUMBER=""
+PARTITION_ROOT_NUMBER=""
 DEVICE_ROOT=""
-LVM_VOLUME_PHISICAL="lvm"
+DEVICE_LVM=""
+LUKS_DEVICE_NAME="cryptroot"
 LVM_VOLUME_GROUP="vg"
 LVM_VOLUME_LOGICAL="root"
 BOOT_DIRECTORY=""
@@ -63,7 +65,7 @@ PARTUUID_ROOT=""
 DEVICE_SATA=""
 DEVICE_NVME=""
 DEVICE_MMC=""
-CPU_INTEL=""
+CPU_VENDOR=""
 VIRTUALBOX=""
 CMDLINE_LINUX_ROOT=""
 CMDLINE_LINUX=""
@@ -81,6 +83,9 @@ function configuration_install() {
 
 function sanitize_variables() {
     DEVICE=$(sanitize_variable "$DEVICE")
+    PARTITION_MODE=$(sanitize_variable "$PARTITION_MODE")
+    PARTITION_CUSTOMMANUAL_BOOT=$(sanitize_variable "$PARTITION_CUSTOMMANUAL_BOOT")
+    PARTITION_CUSTOMMANUAL_ROOT=$(sanitize_variable "$PARTITION_CUSTOMMANUAL_ROOT")
 }
 
 function sanitize_variable() {
@@ -96,7 +101,19 @@ function check_variables() {
     check_variables_value "KEYS" "$KEYS"
     check_variables_value "DEVICE" "$DEVICE"
     check_variables_boolean "LVM" "$LVM"
-    check_variables_equals "PARTITION_ROOT_ENCRYPTION_PASSWORD" "PARTITION_ROOT_ENCRYPTION_PASSWORD_RETYPE" "$PARTITION_ROOT_ENCRYPTION_PASSWORD" "$PARTITION_ROOT_ENCRYPTION_PASSWORD_RETYPE"
+    check_variables_equals "LUKS_PASSWORD" "LUKS_PASSWORD_RETYPE" "$LUKS_PASSWORD" "$LUKS_PASSWORD_RETYPE"
+    check_variables_list "PARTITION_MODE" "$PARTITION_MODE" "auto custom manual" "true"
+    if [ "$PARTITION_MODE" == "custom" ]; then
+        check_variables_value "PARTITION_CUSTOM_PARTED_UEFI" "$PARTITION_CUSTOM_PARTED_UEFI"
+        check_variables_value "PARTITION_CUSTOM_PARTED_BIOS" "$PARTITION_CUSTOM_PARTED_BIOS"
+    fi
+    if [ "$PARTITION_MODE" == "custom" -o "$PARTITION_MODE" == "manual" ]; then
+        check_variables_value "PARTITION_CUSTOMMANUAL_BOOT" "$PARTITION_CUSTOMMANUAL_BOOT"
+        check_variables_value "PARTITION_CUSTOMMANUAL_ROOT" "$PARTITION_CUSTOMMANUAL_ROOT"
+    fi
+    if [ "$LVM" == "true" ]; then
+        check_variables_list "PARTITION_MODE" "$PARTITION_MODE" "auto" "true"
+    fi
     check_variables_value "PING_HOSTNAME" "$PING_HOSTNAME"
 }
 
@@ -205,8 +222,12 @@ function facts() {
     fi
 }
 
+function check_facts() {
+}
+
 function prepare() {
     prepare_partition
+    configure_network
 }
 
 function prepare_partition() {
@@ -214,36 +235,33 @@ function prepare_partition() {
         umount /mnt/boot
         umount /mnt
     fi
-    if [ -e "/dev/mapper/$LVM_VOLUME_LOGICAL" ]; then
-        if [ -n "$PARTITION_ROOT_ENCRYPTION_PASSWORD" ]; then
-            cryptsetup close $LVM_VOLUME_LOGICAL
-        fi
+    if [ -e "/dev/mapper/$LVM_VOLUME_GROUP-$LVM_VOLUME_LOGICAL" ]; then
+        umount "/dev/mapper/$LVM_VOLUME_GROUP-$LVM_VOLUME_LOGICAL"
     fi
-    if [ -e "/dev/mapper/$LVM_VOLUME_PHISICAL" ]; then
-        if [ -n "$PARTITION_ROOT_ENCRYPTION_PASSWORD" ]; then
-            cryptsetup close $LVM_VOLUME_PHISICAL
-        fi
+    if [ -e "/dev/mapper/$LUKS_DEVICE_NAME" ]; then
+        cryptsetup close $LUKS_DEVICE_NAME
     fi
+    partprobe $DEVICE
 }
 
 function configure_network() {
     if [ -n "$WIFI_INTERFACE" ]; then
         cp /etc/netctl/examples/wireless-wpa /etc/netctl
-      	chmod 600 /etc/netctl
+          chmod 600 /etc/netctl
 
-      	sed -i 's/^Interface=.*/Interface='"$WIFI_INTERFACE"'/' /etc/netctl
-      	sed -i 's/^ESSID=.*/ESSID='"$WIFI_ESSID"'/' /etc/netctl
-      	sed -i 's/^Key=.*/Key='\''$WIFI_KEY'\''/' /etc/netctl
-      	if [ "$WIFI_HIDDEN" == "true" ]; then
-      		sed -i 's/^#Hidden=.*/Hidden=yes/' /etc/netctl
-      	fi
+          sed -i 's/^Interface=.*/Interface='"$WIFI_INTERFACE"'/' /etc/netctl
+          sed -i 's/^ESSID=.*/ESSID='"$WIFI_ESSID"'/' /etc/netctl
+          sed -i 's/^Key=.*/Key='\''$WIFI_KEY'\''/' /etc/netctl
+          if [ "$WIFI_HIDDEN" == "true" ]; then
+              sed -i 's/^#Hidden=.*/Hidden=yes/' /etc/netctl
+          fi
 
         netctl stop-all
         netctl start wireless-wpa
         sleep 10
     fi
 
-    ping -c 5 $PING_HOSTNAME
+    ping -c 1 -i 2 -W 5 -w 30 $PING_HOSTNAME
     if [ $? -ne 0 ]; then
         echo "Network ping check failed. Cannot continue."
         exit
@@ -251,73 +269,97 @@ function configure_network() {
 }
 
 function partition() {
-    if [ "$BIOS_TYPE" == "uefi" ]; then
-        if [ "$DEVICE_SATA" == "true" ]; then
-            PARTITION_BOOT="${DEVICE}1"
-            PARTITION_ROOT="${DEVICE}2"
-            #PARTITION_BOOT_NUMBER=1
-            DEVICE_ROOT="${DEVICE}2"
-        fi
-        
-        if [ "$DEVICE_NVME" == "true" ]; then
-            PARTITION_BOOT="${DEVICE}p1"
-            PARTITION_ROOT="${DEVICE}p2"
-            #PARTITION_BOOT_NUMBER=1
-            DEVICE_ROOT="${DEVICE}p2"
+    # setup
+    if [ "$PARTITION_MODE" == "auto" ]; then
+        if [ "$BIOS_TYPE" == "uefi" ]; then
+            if [ "$DEVICE_SATA" == "true" ]; then
+                PARTITION_BOOT="${DEVICE}1"
+                PARTITION_ROOT="${DEVICE}2"
+                DEVICE_ROOT="${DEVICE}2"
+            fi
+
+            if [ "$DEVICE_NVME" == "true" ]; then
+                PARTITION_BOOT="${DEVICE}p1"
+                PARTITION_ROOT="${DEVICE}p2"
+                DEVICE_ROOT="${DEVICE}p2"
+            fi
+
+            if [ "$DEVICE_MMC" == "true" ]; then
+                PARTITION_BOOT="${DEVICE}p1"
+                PARTITION_ROOT="${DEVICE}p2"
+                DEVICE_ROOT="${DEVICE}p2"
+            fi
         fi
 
-        if [ "$DEVICE_MMC" == "true" ]; then
-            PARTITION_BOOT="${DEVICE}p1"
-            PARTITION_ROOT="${DEVICE}p2"
-            #PARTITION_BOOT_NUMBER=1
-            DEVICE_ROOT="${DEVICE}p2"
+        if [ "$BIOS_TYPE" == "bios" ]; then
+            if [ "$DEVICE_SATA" == "true" ]; then
+                PARTITION_BOOT="${DEVICE}1"
+                PARTITION_ROOT="${DEVICE}2"
+                DEVICE_ROOT="${DEVICE}2"
+            fi
+
+            if [ "$DEVICE_NVME" == "true" ]; then
+                PARTITION_BOOT="${DEVICE}p1"
+                PARTITION_ROOT="${DEVICE}p2"
+                DEVICE_ROOT="${DEVICE}p2"
+            fi
+
+            if [ "$DEVICE_MMC" == "true" ]; then
+                PARTITION_BOOT="${DEVICE}p1"
+                PARTITION_ROOT="${DEVICE}p2"
+                DEVICE_ROOT="${DEVICE}p2"
+            fi
         fi
+    elif [ "$PARTITION_MODE" == "custom" ]; then
+        PARTITION_PARTED_UEFI="$PARTITION_CUSTOM_PARTED_UEFI"
+        PARTITION_PARTED_BIOS="$PARTITION_CUSTOM_PARTED_BIOS"
     fi
 
-    if [ "$BIOS_TYPE" == "bios" ]; then
-        if [ "$DEVICE_SATA" == "true" ]; then
-            PARTITION_BIOS="${DEVICE}1"
-            PARTITION_BOOT="${DEVICE}2"
-            PARTITION_ROOT="${DEVICE}3"
-            #PARTITION_BOOT_NUMBER=2
-            DEVICE_ROOT="${DEVICE}3"
-        fi
-        
-        if [ "$DEVICE_NVME" == "true" ]; then
-            PARTITION_BIOS="${DEVICE}p1"
-            PARTITION_BOOT="${DEVICE}p2"
-            PARTITION_ROOT="${DEVICE}p3"
-            #PARTITION_BOOT_NUMBER=2
-            DEVICE_ROOT="${DEVICE}p3"
-        fi
-
-        if [ "$DEVICE_MMC" == "true" ]; then
-            PARTITION_BIOS="${DEVICE}p1"
-            PARTITION_BOOT="${DEVICE}p2"
-            PARTITION_ROOT="${DEVICE}p3"
-            #PARTITION_BOOT_NUMBER=2
-            DEVICE_ROOT="${DEVICE}p3"
-        fi
+    if [ "$PARTITION_MODE" == "custom" -o "$PARTITION_MODE" == "manual" ]; then
+        PARTITION_BOOT="$PARTITION_CUSTOMMANUAL_BOOT"
+        PARTITION_ROOT="$PARTITION_CUSTOMMANUAL_ROOT"
+        DEVICE_ROOT="${PARTITION_ROOT}"
     fi
 
-    if [ -n "$PARTITION_ROOT_ENCRYPTION_PASSWORD" ]; then
-        echo -n "$PARTITION_ROOT_ENCRYPTION_PASSWORD" | cryptsetup --key-file=- open $PARTITION_ROOT $LVM_VOLUME_PHISICAL
+    PARTITION_BOOT_NUMBER="$PARTITION_BOOT"
+    PARTITION_ROOT_NUMBER="$PARTITION_ROOT"
+    PARTITION_BOOT_NUMBER="${PARTITION_BOOT_NUMBER//\/dev\/sda/}"
+    PARTITION_BOOT_NUMBER="${PARTITION_BOOT_NUMBER//\/dev\/nvme0n1p/}"
+    PARTITION_BOOT_NUMBER="${PARTITION_BOOT_NUMBER//\/dev\/mmcblk0p/}"
+    PARTITION_ROOT_NUMBER="${PARTITION_ROOT_NUMBER//\/dev\/sda/}"
+    PARTITION_ROOT_NUMBER="${PARTITION_ROOT_NUMBER//\/dev\/nvme0n1p/}"
+    PARTITION_ROOT_NUMBER="${PARTITION_ROOT_NUMBER//\/dev\/mmcblk0p/}"
+
+    # luks and lvm
+    if [ -n "$LUKS_PASSWORD" ]; then
+        echo -n "$LUKS_PASSWORD" | cryptsetup --key-file=- open $PARTITION_ROOT $LUKS_DEVICE_NAME
         sleep 5
     fi
 
+    if [ -n "$LUKS_PASSWORD" ]; then
+        DEVICE_ROOT="/dev/mapper/$LUKS_DEVICE_NAME"
+    fi
     if [ "$LVM" == "true" ]; then
-        DEVICE_ROOT_MAPPER="$LVM_VOLUME_GROUP-$LVM_VOLUME_LOGICAL"
-        DEVICE_ROOT="/dev/mapper/$DEVICE_ROOT_MAPPER"
+        DEVICE_ROOT="/dev/mapper/$LVM_VOLUME_GROUP-$LVM_VOLUME_LOGICAL"
     fi
 
-    PARTITION_OPTIONS=""
+    PARTITION_OPTIONS="defaults"
 
     if [ "$DEVICE_TRIM" == "true" ]; then
-        PARTITION_OPTIONS="defaults,noatime"
+        PARTITION_OPTIONS="$PARTITION_OPTIONS,noatime"
     fi
 
-    mount -o "$PARTITION_OPTIONS" $DEVICE_ROOT /mnt
-    mount -o "$PARTITION_OPTIONS" $PARTITION_BOOT /mnt/boot
+    # mount
+    if [ "$FILE_SYSTEM_TYPE" == "btrfs" ]; then
+        mount -o "subvol=root,$PARTITION_OPTIONS,compress=lzo" "$DEVICE_ROOT" /mnt
+        mount -o "$PARTITION_OPTIONS" "$PARTITION_BOOT" /mnt/boot
+        mount -o "subvol=home,$PARTITION_OPTIONS,compress=lzo" "$DEVICE_ROOT" /mnt/home
+        mount -o "subvol=var,$PARTITION_OPTIONS,compress=lzo" "$DEVICE_ROOT" /mnt/var
+        mount -o "subvol=snapshots,$PARTITION_OPTIONS,compress=lzo" "$DEVICE_ROOT" /mnt/snapshots
+    else
+        mount -o "$PARTITION_OPTIONS" $DEVICE_ROOT /mnt
+        mount -o "$PARTITION_OPTIONS" $PARTITION_BOOT /mnt/boot
+    fi
 }
 
 function recovery() {
@@ -331,6 +373,7 @@ function main() {
     warning
     init
     facts
+    check_facts
     prepare
     partition
     #recovery
