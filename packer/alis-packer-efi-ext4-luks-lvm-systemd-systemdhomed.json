@@ -1,6 +1,6 @@
 {
     "variables": {
-      "iso": "https://mirror.rackspace.com/archlinux/iso/latest/archlinux-2020.05.01-x86_64.iso",
+      "iso": "https://archive.archlinux.org/iso/2020.12.01/archlinux-2020.12.01-x86_64.iso",
       "disk_size": "16384"
     },
     "builders": [
@@ -20,22 +20,18 @@
         "disk_size": "{{user `disk_size`}}",
         "hard_drive_interface": "sata",
         "iso_url": "{{user `iso`}}",
-        "iso_checksum": "fe15ff1c688c078d035e275a4946075281f5324e",
-        "iso_checksum_type": "sha1",
+        "iso_checksum": "sha1:95ebacd83098b190e8f30cc28d8c57af0d0088a0",
         "ssh_username": "vagrant",
         "ssh_password": "vagrant",
         "ssh_wait_timeout": "60m",
         "boot_wait": "5s",
         "boot_command": [
-          "<wait30s>",
-          "wget http://{{.HTTPIP}}:{{.HTTPPort}}/alis.conf<enter><wait1s>",
-          "wget http://{{.HTTPIP}}:{{.HTTPPort}}/alis.sh<enter><wait1s>",
-          "sed -i \"s/FILE_SYSTEM_TYPE=.*/FILE_SYSTEM_TYPE=\\\"ext4\\\"/\" ./alis.conf<enter><wait1s>",
-          "sed -i \"s/LVM=.*/LVM=\\\"true\\\"/\" ./alis.conf<enter><wait1s>",
-          "sed -i \"s/LUKS_PASSWORD=.*/LUKS_PASSWORD=\\\"archlinux\\\"/\" ./alis.conf<enter><wait1s>",
-          "sed -i \"s/LUKS_PASSWORD_RETYPE=.*/LUKS_PASSWORD_RETYPE=\\\"archlinux\\\"/\" ./alis.conf<enter><wait1s>",
-          "sed -i \"s/SYSTEMD_HOMED=.*/SYSTEMD_HOMED=\\\"true\\\"/\" ./alis.conf<enter><wait1s>",
-          "sed -i \"s/BOOTLOADER=.*/BOOTLOADER=\\\"systemd\\\"/\" ./alis.conf<enter><wait1s>",
+          "<wait3s><up><up><up><up><up><enter><wait60s>",
+          "curl -O http://{{.HTTPIP}}:{{.HTTPPort}}/alis.conf<enter><wait1s>",
+          "curl -O http://{{.HTTPIP}}:{{.HTTPPort}}/alis.sh<enter><wait1s>",
+          "curl -o ./alis-packer-conf.sh -O http://{{.HTTPIP}}:{{.HTTPPort}}/packer/alis-packer-efi-ext4-luks-lvm-systemd-systemdhomed.sh<enter><wait1s>",
+          "chmod +x ./alis-packer-conf.sh<enter><wait1s>",
+          "./alis-packer-conf.sh<enter><wait1s>",
           "chmod +x ./alis.sh<enter><wait1s>",
           "./alis.sh<enter><wait3>y<wait1s><enter>",
           "<wait10s><wait10s><wait10s><wait10s><wait10s><wait10s><wait10s><wait60m>"

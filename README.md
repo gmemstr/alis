@@ -18,46 +18,70 @@ Please, don't ask for support for this script in Arch Linux forums, first read t
 
 For new features, improvements and bugs fill an issue in GitHub or make a pull request. You can test it in a [VirtualBox](https://www.virtualbox.org/) virtual machine (strongly recommended) before run it in real hardware. If you test it in real hardware please send me an email to pico.dev@gmail.com with the machine description and tell me if something goes wrong or all works fine. [Pull request](https://github.com/picodotdev/alis/pulls) and [new feature request](https://github.com/picodotdev/alis/issues) are welcome!
 
+**Arch Linux Install Script (alis) is based on Arch Linux but is NOT approved, sponsored, or affiliated with Arch Linux or its related projects.**
+
+[![Arch Linux](https://picodotdev.github.io/alis/images/logos/archlinux.svg "Arch Linux")](https://www.archlinux.org/)
+
+### Index
+
+* [Donations](https://github.com/picodotdev/alis#donations)
+* [Principles](https://github.com/picodotdev/alis#principles)
+* [Features](https://github.com/picodotdev/alis#features)
+* [Installation](https://github.com/picodotdev/alis#installation)
+* [Installation with asciinema video](https://github.com/picodotdev/alis#installation)
+* [Recovery](https://github.com/picodotdev/alis#recovery)
+* [How you can help](https://github.com/picodotdev/alis#how-you-can-help)
+* [Test in VirtuaBox with Packer](https://github.com/picodotdev/alis#test-in-virtuabox-with-packer)
+* [Video](https://github.com/picodotdev/alis#video)
+* [Arch Linux Installation Media](https://github.com/picodotdev/alis#arch-linux-installation-media)
+* [Reference](https://github.com/picodotdev/alis#reference)
+
+### Donations
+
+If you find useful this script, you can support me with a [small donation](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=3PF47D5TSNL7C&currency_code=EUR) through PayPal to continue adding features, updating the script, accepting pull request and responding to any question. Also there are other ways you can contribute in the [How you can help](https://github.com/picodotdev/alis#how-you-can-help) section.
+
+[![Donate with PayPal button](https://www.paypalobjects.com/en_US/ES/i/btn/btn_donateCC_LG.gif "PayPal - The safer, easier way to pay online!")](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=3PF47D5TSNL7C&currency_code=EUR)
+
 ### Principles
 
 * Use the original Arch Linux installation media
-* Require as little interactivity as possible
+* As much unattended and automated as possible, require as little interactivity as possible
 * Allow to customize the installation to cover the most common cases
-* Provide support for recovery
-* Provide support for log
+* Provide support for system recovery
+* Provide support for installation log
 
 ### Features
 
-* System: UEFI, BIOS
-* Storage: SATA, NVMe and MMC
-* Encryption: root partition encrypted and no encrypted
-* Partition: no LVM, LVM, LVM on LUKS, GPT on UEFI, MBR on BIOS
-* File system: ext4, btrfs (with subvols), xfs
-* Optional file swap (not supported in btrfs)
-* Storage: SATA, NVMe and MMC
-* Kernels: linux-lts, linux-hardened, linux-zen
-* Desktop environment: GNOME, KDE, XFCE, Mate, Cinnamon, LXDE
-* Display managers: GDM, SDDM, Lightdm, lxdm
-* Graphics controller: intel, nvidia, amd with optionally early KMS start
-* Bootloader: GRUB, rEFInd, systemd-boot
-* WPA WIFI network installation
-* Periodic TRIM for SSD storage
-* Intel and AMD processors microcode
-* Optional file swap (not supported in btrfs)
-* VirtualBox guest utils
-* Kernel compression and custom parameters
-* Users creation and add to sudoers
-* Common and custom packages installation
-* systemd units enable or disable
-* AUR utility installation (aurman, yay)
-* Script for download installation and recovery scripts and configuration files
-* Retry packages download on connection/mirror error
-* Desktop environments (GDM, KDE, XFCE, Mate, Cinnamon, LXDE), display managers (GDM, SDDM, Lightdm, lxdm) and no desktop environment
-* Graphics controllers (intel, nvidia, amd) with optionally early KMS start
-* GRUB, rEFInd, systemd-boot bootloaders
-* Packer support for testing in VirtualBox
-* Installation log with all commands executed and output in a file and/or asciinema video
-* Wait after installation for an abortable reboot
+* **System**: UEFI, BIOS
+* **Storage**: SATA, NVMe and MMC
+* **Encryption**: root partition encrypted and no encrypted
+* **Partition**: no LVM, LVM, LVM on LUKS, GPT on UEFI, MBR on BIOS
+* **File system**: ext4, btrfs (with subvols), xfs, f2fs, reiserfs
+* **Kernels**: linux, linux-lts, linux-hardened, linux-zen
+* **Desktop environment**: GNOME, KDE, XFCE, Mate, Cinnamon, LXDE, i3-wm, i3-gaps
+* **Display managers**: GDM, SDDM, Lightdm, lxdm
+* **Graphics controller**: intel, nvidia and amd with optionally early KMS start. With intel optionally fastboot, hardware video acceleration and framebuffer compression.
+* **Bootloader**: GRUB, rEFInd, systemd-boot
+* **Custom shell**: bash, zsh, dash, fish
+* **WPA WIFI network** installation
+* **Periodic TRIM** for SSD storage
+* Intel and AMD **processors microcode**
+* Optional **swap file**
+* **VirtualBox guest additions**
+* **Kernel compression** and **custom parameters**
+* **Users creation** and **add to sudoers**
+* **systemd units enable or disable**
+* **Multilib** support
+* **Arch Linux** common and custom **packages installation**
+* Flatpak utility installation and **Flatpak packages installation**
+* SDKMAN utility installation and **SDKMAN packages installation**
+* **AUR utility** installation (yay, aurman) and **AUR packages installation**
+* Script for download installation and **recovery scripts** and configuration files
+* **Retry packages download** on connection/mirror error
+* **Packer support** for testing in VirtualBox
+* **Installation log** with all commands executed and output in a file and/or **asciinema video**
+* Wait after installation for an **abortable reboot**
+* Fork the repository and **use your own configuration**
 
 ### Installation
 
@@ -77,7 +101,13 @@ Internet connection is required, with wireless WIFI connection see <a href="http
 # ./alis.sh
 ```
 
-### Installation with asciinema vídeo
+If you fork _alis_ repository you can host your own configuration and changes in your repository.
+
+```
+# curl https://raw.githubusercontent.com/picodotdev/alis/master/download.sh | bash -s -- -u [github user]
+```
+
+### Installation with asciinema video
 
 As another form of log.
 
@@ -117,6 +147,8 @@ Boot from the latest <a href="https://www.archlinux.org/download/">original Arch
 * Create issues with new features
 * Send pull requests
 * Share it in social networks, forums, create a blog post or video about it
+* Send me an email, I like to read that the script is being used and is useful :). Which are your computer specs, which is your alis configuration, if is your personal or working computer, if all worked fine or some suggestion to improve the script
+* Consider to make a [small donation](https://github.com/picodotdev/alis#donations)
 
 ### Test in VirtuaBox with Packer
 
@@ -130,8 +162,6 @@ VirtualBox and [Packer](https://packer.io/) are required.
 
 
 ```
-$ curl https://raw.githubusercontent.com/picodotdev/alis/master/download-packer.sh | bash
-
 $ ./alis-packer.sh -c alis-packer-efi-btrfs-luks-lvm-systemd.json
 $ ./alis-packer.sh -c alis-packer-efi-ext4-grub-gnome.json
 $ ./alis-packer.sh -c alis-packer-efi-ext4-grub-kde.json
@@ -168,6 +198,9 @@ https://www.archlinux.org/download/
 * https://wiki.archlinux.org/index.php/EFI_System_Partition
 * https://wiki.archlinux.org/index.php/File_systems
 * https://wiki.archlinux.org/index.php/Ext4
+* https://wiki.archlinux.org/index.php/Btrfs
+* https://wiki.archlinux.org/index.php/XFS
+* https://wiki.archlinux.org/index.php/F2FS
 * https://wiki.archlinux.org/index.php/Persistent_block_device_naming
 * https://wiki.archlinux.org/index.php/LVM
 * https://wiki.archlinux.org/index.php/Dm-crypt
@@ -193,11 +226,13 @@ https://www.archlinux.org/download/
 * https://wiki.archlinux.org/index.php/Systemd-boot
 * https://wiki.archlinux.org/index.php/Systemd
 * https://wiki.archlinux.org/index.php/Microcode
+* https://wiki.archlinux.org/index.php/Command-line_shell
 * https://wiki.archlinux.org/index.php/Wayland
 * https://wiki.archlinux.org/index.php/Xorg
 * https://wiki.archlinux.org/index.php/Desktop_environment
 * https://wiki.archlinux.org/index.php/GNOME
 * https://wiki.archlinux.org/index.php/KDE
 * https://wiki.archlinux.org/index.php/Xfce
+* https://wiki.archlinux.org/index.php/I3
 * http://tldp.org/LDP/Bash-Beginners-Guide/html/
 * http://tldp.org/LDP/abs/html/

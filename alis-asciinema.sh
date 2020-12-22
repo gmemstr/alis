@@ -3,10 +3,9 @@ set -e
 
 # Arch Linux Install Script (alis) installs unattended, automated
 # and customized Arch Linux system.
-# Copyright (C) 2018 picodotdev
+# Copyright (C) 2020 picodotdev
 
-wget https://github.com/asciinema/asciinema/archive/v2.0.1.zip -O asciinema-2.0.1.zip
-bsdtar -x -f asciinema-2.0.1.zip
-cp -r asciinema-2.0.1/* .
+curl -L -o asciinema-2.0.2.zip https://github.com/asciinema/asciinema/archive/v2.0.2.zip
+unzip asciinema-2.0.2.zip
 rm -f alis.asciinema
-python3 -m asciinema rec -i 5 ~/alis.asciinema
+(cd asciinema-2.0.2 && python3 -m asciinema rec -i 5 ~/alis.asciinema)
